@@ -50,7 +50,7 @@ def main():
     print("===================================================================")
 
     unfollowers = set(followings) - set(followers)
-    
+
     print(f"[나를 언팔한 사람들] -> 총 {len(unfollowers)}명")
     print(unfollowers)
     print("===================================================================")
@@ -63,7 +63,7 @@ def main():
             threads.unfollow(unfollower)
             print(f"{unfollower}님을 언팔로우 했습니다.")
 
-            time.sleep(5)
+            time.sleep(3)
         
         print("언팔로우 작업이 완료되었습니다.")
     else:
