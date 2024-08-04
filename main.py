@@ -7,6 +7,19 @@ def get_credentials():
     password = input("비밀번호를 입력하세요: ")
     return username, password
 
+def login_with_retries(max_retry=3):
+    retries = 0
+    while retries < max_retry:
+        username, password = get_credentials()
+        if login(username, password):
+            print("Login successful!")
+            return True
+        else:
+            print("Login failed. Please try again.")
+            retries += 1
+    print("Max retries reached. Exiting.")
+    return False
+
 def extract_usernames(data):
     usernames = []
     for user_list in data:
@@ -18,17 +31,26 @@ def extract_usernames(data):
 def main():
     
     print("[로그인]")
-    username, password = get_credentials()
 
-    #config.TIMEOUT = 5
-    #config.PROXY = {'http': 'proxy_here', 'https': 'proxy_here'}
+    config.TIMEOUT = 10
+    # config.PROXY = {'http': 'proxy_here', 'https': 'proxy_here'}
     
     threads = MetaThreads()
 
-    if not all([username, password]):
-        username = str(input("유저 아이디 혹은 이메일을 입력해주세요. :"))
-        password = str(input("비밀번호를 입력해주세요. :"))
-    threads.login(username, password)
+    max_retry = 3
+    retries = 0
+
+    while retries < max_retry:
+        username, password = get_credentials()
+        if threads.login(username, password):
+            print("로그인 성공!")
+            break
+        else:
+            print("로그인 실패. 다시 시도해주세요.")
+            retries += 1
+    else:
+        print("3회 실패하여 종료합니다.")
+    
 
     # check logged in user
     print(f"User {threads.me['username']}({threads.me['full_name']}) -> 로그인 완료")
