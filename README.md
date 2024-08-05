@@ -6,3 +6,8 @@
 
 ​
 본 프로그램의 사용으로 인해 발생하는 피해에 대해서는 그 어떤 책임도 지지 않습니다.
+
+
+```
+pyinstaller --name thread_killer --icon logo.ico main.py
+```
