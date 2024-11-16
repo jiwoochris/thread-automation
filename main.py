@@ -1,24 +1,46 @@
-from metathreads import MetaThreads
-from metathreads import config
+from MetaThreads.metathreads import MetaThreads
+from MetaThreads.metathreads import config
 import time
+
+from MetaThreads.metathreads.exceptions import ChallengeRequiredException, LoginFailedException, ResponseErrorException, URLGenerationError
 
 def get_credentials():
     username = input("아이디를 입력하세요: ")
     password = input("비밀번호를 입력하세요: ")
     return username, password
 
-def login_with_retries(max_retry=3):
+def login_with_retries(threads: MetaThreads, max_retry: int =3) -> str | None:
     retries = 0
     while retries < max_retry:
         username, password = get_credentials()
-        if login(username, password):
-            print("Login successful!")
-            return True
-        else:
-            print("Login failed. Please try again.")
+
+        try:
+            if threads.login(username, password):
+                print("로그인 성공!")
+                return username
+            
+        except ChallengeRequiredException as e:
+            print(f"""[2단계 인증이 필요합니다.] 2가지 중 1가지 방법을 통해 2단계 인증을 완료하고 다시 로그인 해주세요.
+1. 다음 링크에서 인증을 완료해주세요: {e.challenge_url}
+2. 모바일로 인스타그램 계정에 로그인 하고 인증을 완료해주세요.""")
             retries += 1
-    print("Max retries reached. Exiting.")
-    return False
+        except LoginFailedException:
+            print("로그인에 실패했습니다. 다시 시도해주세요.")
+            retries += 1
+        except URLGenerationError as e:
+            print(f"URL 생성 에러: {e.message}")
+            retries += 1
+        except ResponseErrorException as e:
+            print(f"응답 에러: {e.message}")
+            retries += 1
+        except Exception as e:
+            print(f"로그인에 실패했습니다. 다시 시도해주세요. 에러: {e}")
+            retries += 1
+
+        print(f"남은 시도 횟수: {max_retry - retries}\n")
+        time.sleep(3)
+            
+    return None
 
 def extract_usernames(data):
     usernames = []
@@ -31,26 +53,14 @@ def extract_usernames(data):
 def main():
     
     print("[로그인]")
-
-    config.TIMEOUT = 10
-    # config.PROXY = {'http': 'proxy_here', 'https': 'proxy_here'}
     
     threads = MetaThreads()
 
-    max_retry = 3
-    retries = 0
+    username = login_with_retries(threads)
+    if username is None:
+        print("로그인 실패. 프로그램을 종료합니다.")
+        return
 
-    while retries < max_retry:
-        username, password = get_credentials()
-        if threads.login(username, password):
-            print("로그인 성공!")
-            break
-        else:
-            print("로그인 실패. 다시 시도해주세요.")
-            retries += 1
-    else:
-        print("3회 실패하여 종료합니다.")
-    
 
     # check logged in user
     print(f"User {threads.me['username']}({threads.me['full_name']}) -> 로그인 완료")
